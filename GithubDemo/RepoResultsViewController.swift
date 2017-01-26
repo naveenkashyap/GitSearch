@@ -10,12 +10,13 @@ import UIKit
 import MBProgressHUD
 
 // Main ViewController
-class RepoResultsViewController: UIViewController {
+class RepoResultsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
+    @IBOutlet weak var tableView: UITableView!
     var searchBar: UISearchBar!
     var searchSettings = GithubRepoSearchSettings()
 
-    var repos: [GithubRepo]!
+    var repos: [GithubRepo] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,6 +24,12 @@ class RepoResultsViewController: UIViewController {
         // Initialize the UISearchBar
         searchBar = UISearchBar()
         searchBar.delegate = self
+        
+        // Initialize the tableView
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.estimatedRowHeight = 100
+        tableView.rowHeight = UITableViewAutomaticDimension
 
         // Add SearchBar to the NavigationBar
         searchBar.sizeToFit()
@@ -30,6 +37,27 @@ class RepoResultsViewController: UIViewController {
 
         // Perform the first search when the view controller first loads
         doSearch()
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if let repos = repos as [GithubRepo]! {
+            return repos.count
+        } else {
+            return 0
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: "RepoCell", for: indexPath) as! RepoCell
+        let repo = repos[indexPath.row]
+        cell.repo = repo
+        
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView,didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
     }
 
     // Perform the search.
@@ -41,13 +69,17 @@ class RepoResultsViewController: UIViewController {
         GithubRepo.fetchRepos(searchSettings, successCallback: { (newRepos) -> Void in
 
             // Print the returned repositories to the output window
+            self.repos.removeAll()
             for repo in newRepos {
+                self.repos.append(repo)
                 print(repo)
-            }   
+            }
+            
+            self.tableView.reloadData()
 
             MBProgressHUD.hide(for: self.view, animated: true)
             }, error: { (error) -> Void in
-                print(error)
+                print(error ?? "There was an error")
         })
     }
 }
