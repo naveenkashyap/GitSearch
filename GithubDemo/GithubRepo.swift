@@ -48,6 +48,8 @@ class GithubRepo: CustomStringConvertible {
         
         if let repoDescription = jsonResult["description"] as? String {
             self.repoDescription = repoDescription
+        } else {
+            repoDescription = ""
         }
     }
     

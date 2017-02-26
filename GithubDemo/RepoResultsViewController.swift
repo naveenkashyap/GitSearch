@@ -10,11 +10,12 @@ import UIKit
 import MBProgressHUD
 
 // Main ViewController
-class RepoResultsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class RepoResultsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, SettingsPresentingViewControllerDelegate {
 
     @IBOutlet weak var tableView: UITableView!
     var searchBar: UISearchBar!
     var searchSettings = GithubRepoSearchSettings()
+    
 
     var repos: [GithubRepo] = []
 
@@ -30,12 +31,23 @@ class RepoResultsViewController: UIViewController, UITableViewDelegate, UITableV
         tableView.dataSource = self
         tableView.estimatedRowHeight = 100
         tableView.rowHeight = UITableViewAutomaticDimension
+        
 
         // Add SearchBar to the NavigationBar
         searchBar.sizeToFit()
         navigationItem.titleView = searchBar
 
         // Perform the first search when the view controller first loads
+        doSearch()
+    }
+    
+    func didCancelSettings() {
+    }
+    
+    func didSaveSettings(settings: GithubRepoSearchSettings) {
+        print("received saved settings")
+        searchSettings = settings
+        print(searchSettings)
         doSearch()
     }
     
@@ -69,6 +81,8 @@ class RepoResultsViewController: UIViewController, UITableViewDelegate, UITableV
         GithubRepo.fetchRepos(searchSettings, successCallback: { (newRepos) -> Void in
 
             // Print the returned repositories to the output window
+            // TODO this replaces the entire table.
+            // TODO need to allow for empty search bar to default back to search settings
             self.repos.removeAll()
             for repo in newRepos {
                 self.repos.append(repo)
@@ -81,6 +95,13 @@ class RepoResultsViewController: UIViewController, UITableViewDelegate, UITableV
             }, error: { (error) -> Void in
                 print(error ?? "There was an error")
         })
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let navController = segue.destination as! UINavigationController
+        let vc = navController.topViewController as! SearchSettingsViewController
+        vc.settings = searchSettings
+        vc.delegate = self
     }
 }
 
